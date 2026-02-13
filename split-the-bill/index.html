@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split the Bill</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Split the Bill</h1>
+
+    <!-- SECTION 1: Add receipt items -->
+    <div class="section">
+        <h2>1. Add Receipt Items</h2>
+        <p>Enter each item from the receipt:</p>
+        <div class="input-row">
+            <input type="text" id="item-name" placeholder="Item name (e.g. Burger)">
+            <input type="number" id="item-price" placeholder="Price (e.g. 12.99)" step="0.01" min="0">
+            <button onclick="addItem()">Add Item</button>
+        </div>
+        <table id="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+                <!-- Items will appear here -->
+            </tbody>
+        </table>
+        <p class="subtotal">Subtotal: $<span id="subtotal">0.00</span></p>
+    </div>
+
+    <!-- SECTION 2: Add people -->
+    <div class="section">
+        <h2>2. Add People</h2>
+        <p>Enter the name of each person splitting the bill:</p>
+        <div class="input-row">
+            <input type="text" id="person-name" placeholder="Person's name (e.g. Alice)">
+            <button onclick="addPerson()">Add Person</button>
+        </div>
+        <div id="people-list">
+            <!-- People will appear here -->
+        </div>
+    </div>
+
+    <!-- SECTION 3: Assign items to people -->
+    <div class="section">
+        <h2>3. Assign Items to People</h2>
+        <p>Check the boxes to show who had each item. If multiple people share an item, check all of them — the cost splits evenly.</p>
+        <div id="assignments">
+            <!-- Assignment checkboxes will appear here -->
+        </div>
+    </div>
+
+    <!-- SECTION 4: Tax and Tip -->
+    <div class="section">
+        <h2>4. Tax &amp; Tip</h2>
+        <div class="input-row">
+            <label for="tax-amount">Tax ($):</label>
+            <input type="number" id="tax-amount" placeholder="e.g. 5.50" step="0.01" min="0" value="0">
+        </div>
+        <div class="input-row">
+            <label for="tip-amount">Tip ($):</label>
+            <input type="number" id="tip-amount" placeholder="e.g. 10.00" step="0.01" min="0" value="0">
+        </div>
+    </div>
+
+    <!-- SECTION 5: Calculate and show summary -->
+    <div class="section">
+        <h2>5. Summary</h2>
+        <button class="calculate-btn" onclick="calculate()">Calculate What Each Person Owes</button>
+        <div id="summary">
+            <!-- Summary will appear here -->
+        </div>
+        <p class="grand-total">Grand Total: $<span id="grand-total">0.00</span></p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
