@@ -336,3 +336,104 @@ td.price {
     padding: 20px;
     font-size: 0.9rem;
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 600px) {
+    body {
+        padding: 16px 10px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .section {
+        padding: 16px 14px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+    }
+
+    /* Stack inputs vertically on mobile */
+    .input-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .input-row input[type="text"],
+    .input-row input[type="number"] {
+        width: 100%;
+        min-width: unset;
+        font-size: 16px; /* prevents iOS zoom on focus */
+    }
+
+    .input-row label {
+        min-width: unset;
+    }
+
+    .input-row button {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+    }
+
+    /* Make table scroll horizontally if needed */
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    th, td {
+        padding: 10px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* Larger touch targets for checkboxes */
+    .checkbox-group {
+        gap: 6px;
+    }
+
+    .checkbox-group label {
+        padding: 8px 12px;
+        background-color: #FFFFFF;
+        border: 1.5px solid #E0E1E8;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Larger remove buttons for touch */
+    .remove-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .person-tag {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+    }
+
+    .person-tag .remove-person {
+        font-size: 1.4rem;
+        padding: 0 6px;
+    }
+
+    /* Summary adjustments */
+    .person-summary {
+        padding: 14px;
+    }
+
+    .calculate-btn {
+        padding: 16px;
+        font-size: 1rem;
+    }
+
+    .grand-total {
+        font-size: 1.15rem;
+    }
+}
