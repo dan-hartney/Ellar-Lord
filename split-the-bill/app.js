@@ -14,8 +14,10 @@ let dragItemId = null; // item being dragged
 // RECEIPT UPLOAD & OCR
 // ============================================================
 
-// Make the upload area also work via click (some mobile browsers need this)
-document.getElementById("upload-area").addEventListener("click", function () {
+// Make the upload area also work via click, but avoid double-triggering
+// on mobile where the invisible file input already catches the tap.
+document.getElementById("upload-area").addEventListener("click", function (e) {
+    if (e.target.closest("#receipt-input")) return; // already handled natively
     document.getElementById("receipt-input").click();
 });
 
