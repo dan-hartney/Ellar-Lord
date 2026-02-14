@@ -26,8 +26,8 @@ document.getElementById("receipt-input").addEventListener("change", function (ev
     var statusText = document.getElementById("ocr-status-text");
     var spinner = document.querySelector(".ocr-spinner");
     statusEl.style.display = "flex";
-    statusEl.style.backgroundColor = "#F0F6FF";
-    statusEl.style.color = "#118AB2";
+    statusEl.style.backgroundColor = "";
+    statusEl.style.color = "";
     spinner.style.display = "";
     statusText.textContent = "Loading image...";
 
@@ -78,8 +78,8 @@ function runOCR(imageData) {
     var spinner = document.querySelector(".ocr-spinner");
 
     statusEl.style.display = "flex";
-    statusEl.style.backgroundColor = "#F0F6FF";
-    statusEl.style.color = "#118AB2";
+    statusEl.style.backgroundColor = "";
+    statusEl.style.color = "";
     spinner.style.display = "";
     resultsEl.style.display = "none";
     statusText.textContent = "Downloading OCR model (first time only)...";
@@ -221,8 +221,8 @@ function addSelectedOcrItems() {
     var statusEl = document.getElementById("ocr-status");
     var statusText = document.getElementById("ocr-status-text");
     statusEl.style.display = "flex";
-    statusEl.style.backgroundColor = "#E8F5E9";
-    statusEl.style.color = "#2E7D32";
+    statusEl.style.backgroundColor = "rgba(52, 199, 89, 0.1)";
+    statusEl.style.color = "#34C759";
     document.querySelector(".ocr-spinner").style.display = "none";
     statusText.textContent = addedCount + " item" + (addedCount > 1 ? "s" : "") + " added to your bill!";
 
@@ -601,7 +601,7 @@ function calculate() {
 
 function launchConfetti(container) {
     const rect = container.getBoundingClientRect();
-    const colors = ["#E8461E", "#FF8C42", "#FFD166", "#06D6A0", "#118AB2", "#EF476F"];
+    const colors = ["#007AFF", "#5856D6", "#34C759", "#FF9500", "#FF2D55", "#5AC8FA"];
 
     for (let i = 0; i < 40; i++) {
         const particle = document.createElement("div");
