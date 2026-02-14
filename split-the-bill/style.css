@@ -1,5 +1,4 @@
 /* ===== GENERAL PAGE STYLING ===== */
-/* This sets defaults for the whole page */
 * {
     margin: 0;
     padding: 0;
@@ -7,50 +6,82 @@
 }
 
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background-color: #f0f4f8;
-    color: #333;
-    max-width: 700px;
-    margin: 0 auto;       /* centers the page content */
-    padding: 20px;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background-color: #F0F1F5;
+    color: #2D2D3F;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px;
 }
 
-/* ===== MAIN HEADING ===== */
-h1 {
+/* ===== APP HEADER ===== */
+.app-header {
     text-align: center;
-    color: #2c3e50;
+    margin-bottom: 32px;
+}
+
+h1 {
+    color: #1A1A2E;
     font-size: 2rem;
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid #3498db;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.app-subtitle {
+    color: #8B8FA3;
+    font-size: 0.95rem;
+    font-weight: 400;
 }
 
 /* ===== EACH SECTION (the white cards) ===== */
 .section {
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 24px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #E8E9EF;
 }
 
-.section h2 {
-    color: #2c3e50;
-    font-size: 1.3rem;
+/* ===== SECTION TITLE WITH STEP BADGE ===== */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 8px;
 }
 
-.section p {
-    color: #666;
-    font-size: 0.95rem;
-    margin-bottom: 12px;
+.step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #E8461E;
+    color: #FFFFFF;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 
-/* ===== INPUT ROWS (text boxes + buttons side by side) ===== */
+.section-title h2 {
+    color: #1A1A2E;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.section p {
+    color: #8B8FA3;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+/* ===== INPUT ROWS ===== */
 .input-row {
     display: flex;
     gap: 10px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -58,104 +89,135 @@ h1 {
 .input-row label {
     font-weight: 600;
     min-width: 60px;
+    color: #4A4A5A;
+    font-size: 0.9rem;
 }
 
 input[type="text"],
 input[type="number"] {
-    padding: 10px 12px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 1rem;
+    padding: 10px 14px;
+    border: 1.5px solid #E0E1E8;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
     flex: 1;
     min-width: 120px;
-    transition: border-color 0.2s;
+    background-color: #F7F8FA;
+    color: #2D2D3F;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: #E8461E;
+    background-color: #FFFFFF;
 }
 
 /* ===== BUTTONS ===== */
 button {
     padding: 10px 20px;
-    background-color: #3498db;
-    color: #fff;
+    background-color: #E8461E;
+    color: #FFFFFF;
     border: none;
-    border-radius: 6px;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
     white-space: nowrap;
 }
 
 button:hover {
-    background-color: #2980b9;
+    background-color: #D03A14;
+}
+
+button:active {
+    transform: scale(0.97);
 }
 
 .calculate-btn {
     width: 100%;
     padding: 14px;
-    font-size: 1.15rem;
-    font-weight: 600;
-    background-color: #27ae60;
+    font-size: 1.05rem;
+    font-weight: 700;
+    background-color: #E8461E;
     margin-bottom: 16px;
+    border-radius: 12px;
+    letter-spacing: 0.02em;
 }
 
 .calculate-btn:hover {
-    background-color: #219a52;
+    background-color: #D03A14;
 }
 
 /* ===== ITEMS TABLE ===== */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 th, td {
     text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #eee;
+    padding: 11px 14px;
+    border-bottom: 1px solid #F0F1F5;
 }
 
 th {
-    background-color: #f8f9fa;
+    background-color: #F7F8FA;
     font-weight: 600;
-    color: #555;
+    font-size: 0.8rem;
+    color: #8B8FA3;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 8px;
+}
+
+th:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+th:last-child {
+    border-radius: 0 8px 8px 0;
 }
 
 td.price {
-    font-family: "Courier New", monospace;
     font-weight: 600;
+    color: #1A1A2E;
 }
 
-/* ===== REMOVE BUTTON (small red button on each item) ===== */
+/* ===== REMOVE BUTTON ===== */
 .remove-btn {
-    background-color: #e74c3c;
+    background-color: transparent;
+    color: #E8461E;
     padding: 5px 12px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    border: 1.5px solid #E8461E;
+    border-radius: 8px;
 }
 
 .remove-btn:hover {
-    background-color: #c0392b;
+    background-color: #E8461E;
+    color: #FFFFFF;
 }
 
 /* ===== SUBTOTAL / GRAND TOTAL ===== */
 .subtotal, .grand-total {
     text-align: right;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    margin-top: 10px;
-    color: #2c3e50;
+    margin-top: 12px;
+    color: #2D2D3F;
 }
 
 .grand-total {
-    font-size: 1.3rem;
-    color: #27ae60;
-    border-top: 2px solid #27ae60;
-    padding-top: 12px;
+    font-size: 1.25rem;
+    color: #E8461E;
+    border-top: 2px solid #E8461E;
+    padding-top: 14px;
+    margin-top: 14px;
 }
 
 /* ===== PEOPLE LIST (name tags) ===== */
@@ -163,24 +225,26 @@ td.price {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 .person-tag {
-    background-color: #ebf5fb;
-    border: 2px solid #3498db;
-    border-radius: 20px;
-    padding: 6px 14px;
+    background-color: #FEF1ED;
+    border: 1.5px solid #F0A890;
+    border-radius: 24px;
+    padding: 6px 16px;
     display: flex;
     align-items: center;
     gap: 8px;
     font-weight: 500;
+    font-size: 0.9rem;
+    color: #2D2D3F;
 }
 
 .person-tag .remove-person {
     background: none;
     border: none;
-    color: #e74c3c;
+    color: #E8461E;
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0 4px;
@@ -188,82 +252,87 @@ td.price {
 }
 
 .person-tag .remove-person:hover {
-    color: #c0392b;
+    color: #D03A14;
 }
 
-/* ===== ASSIGNMENT CARDS (item + checkboxes) ===== */
+/* ===== ASSIGNMENT CARDS ===== */
 .assignment-card {
-    background-color: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 12px 16px;
+    background-color: #F7F8FA;
+    border: 1px solid #E8E9EF;
+    border-radius: 12px;
+    padding: 14px 18px;
     margin-bottom: 10px;
 }
 
 .assignment-card .item-header {
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #2c3e50;
+    margin-bottom: 10px;
+    color: #1A1A2E;
+    font-size: 0.95rem;
 }
 
 .assignment-card .item-header span {
-    color: #888;
+    color: #8B8FA3;
     font-weight: 400;
 }
 
 .checkbox-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 14px;
 }
 
 .checkbox-group label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    color: #4A4A5A;
 }
 
 .checkbox-group input[type="checkbox"] {
     width: 18px;
     height: 18px;
     cursor: pointer;
-    accent-color: #3498db;
+    accent-color: #E8461E;
+    border-radius: 4px;
 }
 
 /* ===== SUMMARY RESULTS ===== */
 .person-summary {
-    background-color: #f8f9fa;
-    border-left: 4px solid #3498db;
-    border-radius: 6px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
+    background-color: #F7F8FA;
+    border-left: 4px solid #E8461E;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
 }
 
 .person-summary .person-name {
     font-weight: 700;
-    font-size: 1.1rem;
-    color: #2c3e50;
+    font-size: 1.05rem;
+    color: #1A1A2E;
     margin-bottom: 6px;
 }
 
 .person-summary .person-items {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 0.85rem;
+    color: #8B8FA3;
     margin-bottom: 6px;
+    line-height: 1.5;
 }
 
 .person-summary .person-total {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: #27ae60;
+    color: #E8461E;
 }
 
 /* ===== EMPTY STATE MESSAGES ===== */
 .empty-message {
-    color: #aaa;
+    color: #B0B3C1;
     font-style: italic;
     text-align: center;
-    padding: 16px;
+    padding: 20px;
+    font-size: 0.9rem;
 }
