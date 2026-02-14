@@ -7,7 +7,7 @@ let items = [];
 let people = [];
 let ocrResults = []; // holds parsed items from receipt scan
 let assignments = {}; // itemId -> [person1, person2, ...] for drag-and-drop
-let selectedItemId = null; // currently tapped item for tap-to-assign
+let selectedItemIds = new Set(); // currently tapped items for tap-to-assign
 let dragItemId = null; // item being dragged
 
 // ============================================================
@@ -127,17 +127,25 @@ function runOCR(imageData) {
         }
     }).then(function (result) {
         statusEl.style.display = "none";
-        var parsedItems = parseReceiptText(result.data.text);
+        var parsed = parseReceiptText(result.data.text);
 
-        if (parsedItems.length === 0) {
+        // Auto-fill tax and tip fields if detected
+        if (parsed.tax > 0) {
+            document.getElementById("tax-amount").value = parsed.tax.toFixed(2);
+        }
+        if (parsed.tip > 0) {
+            document.getElementById("tip-amount").value = parsed.tip.toFixed(2);
+        }
+
+        if (parsed.items.length === 0) {
             statusEl.style.display = "flex";
             statusText.textContent = "No items found. Try a clearer photo or enter items manually.";
             spinner.style.display = "none";
             return;
         }
 
-        ocrResults = parsedItems;
-        renderOcrResults();
+        ocrResults = parsed.items;
+        renderOcrResults(parsed.tax, parsed.tip);
     }).catch(function (err) {
         statusEl.style.display = "flex";
         statusText.textContent = "Error: " + (err.message || "Could not read receipt. Please try again.");
@@ -145,18 +153,24 @@ function runOCR(imageData) {
     });
 }
 
-// Parse the raw OCR text to extract item names and prices
+// Parse the raw OCR text to extract item names, prices, tax, and tip.
+// Returns { items: [...], tax: number, tip: number }
 function parseReceiptText(text) {
     var foundItems = [];
+    var detectedTax = 0;
+    var detectedTip = 0;
     var lines = text.split("\n");
 
-    // Words that indicate non-item lines (totals, tax, etc.)
+    // Keywords for detecting tax and tip lines
+    var taxWords = ["tax", "hst", "gst", "pst", "vat"];
+    var tipWords = ["tip", "gratuity"];
+
+    // Words that indicate non-item lines (totals, payment, etc.)
     var skipWords = [
-        "subtotal", "sub total", "total", "tax", "tip", "gratuity",
-        "balance", "change", "cash", "credit", "debit", "visa",
-        "mastercard", "amex", "payment", "amount due", "thank you",
-        "welcome", "guest", "server", "table", "order", "check",
-        "date", "receipt"
+        "subtotal", "sub total", "total", "balance", "change", "cash",
+        "credit", "debit", "visa", "mastercard", "amex", "payment",
+        "amount due", "thank you", "welcome", "guest", "server",
+        "table", "order", "check", "date", "receipt"
     ];
 
     for (var i = 0; i < lines.length; i++) {
@@ -182,8 +196,29 @@ function parseReceiptText(text) {
 
         if (!name || name.length < 2) continue;
 
-        // Skip lines that look like totals/tax/etc
         var lowerName = name.toLowerCase();
+
+        // Detect tax lines (e.g. "Sales Tax 5.50", "HST $3.25")
+        var isTax = false;
+        for (var t = 0; t < taxWords.length; t++) {
+            if (lowerName.indexOf(taxWords[t]) !== -1) { isTax = true; break; }
+        }
+        if (isTax && lowerName.indexOf("total") === -1 && lowerName.indexOf("subtotal") === -1) {
+            detectedTax = price;
+            continue;
+        }
+
+        // Detect tip lines (e.g. "Tip $10.00", "Gratuity 8.00")
+        var isTip = false;
+        for (var tp = 0; tp < tipWords.length; tp++) {
+            if (lowerName.indexOf(tipWords[tp]) !== -1) { isTip = true; break; }
+        }
+        if (isTip) {
+            detectedTip = price;
+            continue;
+        }
+
+        // Skip non-item lines (totals, payment info, etc.)
         var shouldSkip = false;
         for (var j = 0; j < skipWords.length; j++) {
             if (lowerName.indexOf(skipWords[j]) !== -1) {
@@ -196,16 +231,25 @@ function parseReceiptText(text) {
         foundItems.push({ name: name, price: price });
     }
 
-    return foundItems;
+    return { items: foundItems, tax: detectedTax, tip: detectedTip };
 }
 
 // Show the parsed OCR items with checkboxes so the user can pick which to add
-function renderOcrResults() {
+function renderOcrResults(tax, tip) {
     var container = document.getElementById("ocr-items-list");
     var resultsEl = document.getElementById("ocr-results");
     resultsEl.style.display = "block";
 
     var html = "";
+
+    // Show a note if tax/tip were auto-detected
+    if (tax > 0 || tip > 0) {
+        var parts = [];
+        if (tax > 0) parts.push("Tax: $" + tax.toFixed(2));
+        if (tip > 0) parts.push("Tip: $" + tip.toFixed(2));
+        html += '<div class="ocr-tax-tip-note">' + parts.join(" &bull; ") + ' — auto-filled in Step 4</div>';
+    }
+
     for (var i = 0; i < ocrResults.length; i++) {
         html += '<div class="ocr-item-row">';
         html += '<input type="checkbox" id="ocr-item-' + i + '" checked>';
@@ -412,7 +456,7 @@ function renderAssignments() {
 
     if (items.length === 0 || people.length === 0) {
         container.innerHTML = '<p class="empty-message">Add items and people first to assign them.</p>';
-        selectedItemId = null;
+        selectedItemIds.clear();
         return;
     }
 
@@ -437,12 +481,17 @@ function renderAssignments() {
 
     // ---- Item pool ----
     html += '<div class="item-pool">';
-    html += '<div class="pool-label">Tap an item, then tap a plate to assign — or drag directly</div>';
+    if (selectedItemIds.size > 0) {
+        var selCount = selectedItemIds.size;
+        html += '<div class="pool-label pool-label-active">' + selCount + ' item' + (selCount !== 1 ? 's' : '') + ' selected — tap a plate to assign <span class="clear-selection" id="clear-selection">Clear</span></div>';
+    } else {
+        html += '<div class="pool-label">Tap items to select, then tap a plate — or drag directly</div>';
+    }
     html += '<div class="item-chips">';
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const assigned = assignments[item.id] || [];
-        const isSelected = selectedItemId === item.id;
+        const isSelected = selectedItemIds.has(item.id);
         let cls = "item-chip";
         if (isSelected) cls += " selected";
         if (assigned.length > 0) cls += " assigned";
@@ -515,25 +564,45 @@ function attachDndListeners() {
     const chips = document.querySelectorAll(".item-chip");
     const plates = document.querySelectorAll(".person-plate");
 
-    // ---- Chip click: tap-to-select ----
+    // ---- Chip click: toggle in/out of multi-select set ----
     for (let i = 0; i < chips.length; i++) {
         chips[i].addEventListener("click", function (e) {
             // Ignore if this was the end of a touch-drag
             if (this._wasDragged) { this._wasDragged = false; return; }
             const id = Number(this.getAttribute("data-item-id"));
-            selectedItemId = (selectedItemId === id) ? null : id;
+            if (selectedItemIds.has(id)) {
+                selectedItemIds.delete(id);
+            } else {
+                selectedItemIds.add(id);
+            }
             renderAssignments();
         });
     }
 
-    // ---- Plate click: assign selected item ----
+    // ---- Plate click: assign all selected items to this person ----
     for (let i = 0; i < plates.length; i++) {
         plates[i].addEventListener("click", function (e) {
-            // Don't trigger if clicking a remove button
             if (e.target.closest(".plate-item-remove")) return;
-            if (selectedItemId === null) return;
+            if (selectedItemIds.size === 0) return;
             const person = this.getAttribute("data-person");
-            toggleAssignment(selectedItemId, person);
+            selectedItemIds.forEach(function (itemId) {
+                if (!assignments[itemId]) assignments[itemId] = [];
+                if (assignments[itemId].indexOf(person) === -1) {
+                    assignments[itemId].push(person);
+                }
+            });
+            selectedItemIds.clear();
+            renderAssignments();
+        });
+    }
+
+    // ---- Clear selection button ----
+    var clearBtn = document.getElementById("clear-selection");
+    if (clearBtn) {
+        clearBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            selectedItemIds.clear();
+            renderAssignments();
         });
     }
 

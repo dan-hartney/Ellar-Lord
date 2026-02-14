@@ -327,6 +327,17 @@ td.price {
     text-align: center;
 }
 
+.pool-label-active {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.clear-selection {
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
 .item-chips {
     display: flex;
     flex-wrap: wrap;
@@ -692,6 +703,18 @@ td.price {
     color: var(--color-label);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
+}
+
+/* -- OCR tax/tip auto-detect note -- */
+.ocr-tax-tip-note {
+    background-color: rgba(52, 199, 89, 0.08);
+    color: var(--color-green);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: var(--radius-xs);
+    margin-bottom: 8px;
+    text-align: center;
 }
 
 /* -- Section divider -- */
