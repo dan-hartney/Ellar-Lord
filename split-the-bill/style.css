@@ -313,51 +313,216 @@ td.price {
     color: var(--color-red);
 }
 
-/* ===== ASSIGNMENT CARDS ===== */
-.assignment-card {
-    background-color: var(--color-fill);
-    border: none;
-    border-radius: var(--radius-md);
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    transition: box-shadow 0.3s ease;
+/* ===== DRAG-AND-DROP ASSIGNMENT ===== */
+
+/* -- Item pool (source area) -- */
+.item-pool {
+    margin-bottom: 16px;
 }
 
-.assignment-card .item-header {
-    font-weight: 600;
+.pool-label {
+    font-size: 12px;
+    color: var(--color-tertiary-label);
     margin-bottom: 10px;
-    color: var(--color-label);
-    font-size: 15px;
-    letter-spacing: -0.1px;
+    text-align: center;
 }
 
-.assignment-card .item-header span {
-    color: var(--color-secondary-label);
-    font-weight: 400;
-}
-
-.checkbox-group {
+.item-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 6px;
 }
 
-.checkbox-group label {
+.item-chip {
     display: flex;
     align-items: center;
     gap: 6px;
-    cursor: pointer;
+    padding: 8px 14px;
+    background-color: var(--color-fill);
+    border: 1.5px solid transparent;
+    border-radius: 100px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: border-color var(--transition), background-color var(--transition),
+        transform 0.15s ease, opacity var(--transition);
     font-size: 14px;
-    color: var(--color-label);
-    font-weight: 400;
 }
 
-.checkbox-group input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+.item-chip:active {
+    cursor: grabbing;
+}
+
+.item-chip.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-tint-bg);
+}
+
+.item-chip.assigned {
+    background-color: rgba(52, 199, 89, 0.08);
+}
+
+.item-chip.assigned.selected {
+    background-color: var(--color-tint-bg);
+    border-color: var(--color-primary);
+}
+
+.item-chip.dragging {
+    opacity: 0.35;
+    transform: scale(0.95);
+}
+
+.chip-name {
+    color: var(--color-label);
+    font-weight: 500;
+}
+
+.chip-price {
+    color: var(--color-secondary-label);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+
+.split-badge,
+.assigned-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 100px;
+    line-height: 1.4;
+}
+
+.split-badge {
+    background-color: rgba(0, 122, 255, 0.12);
+    color: var(--color-primary);
+}
+
+.assigned-badge {
+    background-color: rgba(52, 199, 89, 0.12);
+    color: var(--color-green);
+}
+
+/* -- Drag ghost (touch drag clone) -- */
+.drag-ghost {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-elevated);
+    border-radius: 100px;
+    background-color: var(--color-surface);
+    border: 1.5px solid var(--color-primary);
+}
+
+/* -- Person plates (drop targets) -- */
+.person-plates {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.person-plate {
+    background-color: var(--color-fill);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-md);
+    padding: 12px;
+    min-height: 100px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.person-plate.drag-over {
+    border-color: var(--color-primary);
+    background-color: var(--color-tint-bg);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
+
+.plate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-separator);
+}
+
+.plate-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--color-label);
+    letter-spacing: -0.1px;
+}
+
+.plate-total {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.plate-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.plate-empty {
+    color: var(--color-tertiary-label);
+    font-size: 13px;
+    text-align: center;
+    padding: 14px 0;
+}
+
+.plate-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-xs);
+    font-size: 13px;
+}
+
+.plate-item-name {
+    flex: 1;
+    color: var(--color-label);
+    font-weight: 400;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plate-item-split {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.plate-item-price {
+    font-weight: 500;
+    color: var(--color-secondary-label);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.plate-item-remove {
+    background: none;
+    border: none;
+    color: var(--color-tertiary-label);
+    font-size: 16px;
     cursor: pointer;
-    accent-color: var(--color-primary);
-    border-radius: 4px;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color var(--transition);
+}
+
+.plate-item-remove:hover {
+    color: var(--color-red);
+    background: none;
 }
 
 /* ===== SUMMARY RESULTS ===== */
@@ -597,29 +762,14 @@ td.price {
     animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* -- Sparkle stars on checkbox check -- */
-@keyframes sparkle-burst {
-    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--sx), var(--sy)) scale(0); opacity: 0; }
+/* -- Plate item slide-in -- */
+@keyframes plate-item-in {
+    0%   { opacity: 0; transform: translateY(-4px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.sparkle-star {
-    position: absolute;
-    pointer-events: none;
-    font-size: 0.85rem;
-    animation: sparkle-burst 0.5s ease-out forwards;
-    z-index: 10;
-}
-
-/* -- Assignment card glow when checkbox checked -- */
-@keyframes card-glow {
-    0%   { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.25); }
-    50%  { box-shadow: 0 0 12px 2px rgba(0, 122, 255, 0.1); }
-    100% { box-shadow: none; }
-}
-
-.assignment-card.glow {
-    animation: card-glow 0.4s ease-out;
+.animate-plate-item {
+    animation: plate-item-in 0.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 /* -- Confetti particle for calculate celebration -- */
@@ -714,23 +864,19 @@ td.price {
         font-size: 14px;
     }
 
-    /* Larger touch targets for checkboxes */
-    .checkbox-group {
-        gap: 6px;
+    /* Single-column plates on mobile */
+    .person-plates {
+        grid-template-columns: 1fr;
     }
 
-    .checkbox-group label {
-        padding: 10px 14px;
-        background-color: var(--color-surface);
-        border: 1px solid var(--color-separator);
-        border-radius: var(--radius-sm);
-        font-size: 14px;
-        width: 100%;
+    .item-chip {
+        padding: 10px 16px;
+        font-size: 15px;
     }
 
-    .checkbox-group input[type="checkbox"] {
-        width: 22px;
-        height: 22px;
+    .plate-item-remove {
+        font-size: 18px;
+        padding: 2px 4px;
     }
 
     /* Larger remove buttons for touch */

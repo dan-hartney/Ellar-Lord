@@ -6,6 +6,9 @@
 let items = [];
 let people = [];
 let ocrResults = []; // holds parsed items from receipt scan
+let assignments = {}; // itemId -> [person1, person2, ...] for drag-and-drop
+let selectedItemId = null; // currently tapped item for tap-to-assign
+let dragItemId = null; // item being dragged
 
 // ============================================================
 // RECEIPT UPLOAD & OCR
@@ -377,93 +380,270 @@ function renderPeople() {
 }
 
 // ============================================================
-// SECTION 3: ASSIGNING ITEMS TO PEOPLE
+// SECTION 3: DRAG-AND-DROP ITEM ASSIGNMENT
 // ============================================================
 
-// This function builds the assignment area: for each item, it shows
-// a checkbox for each person. Checking a box means that person had
-// (or shared) that item.
+// Renders the drag-and-drop assignment UI:
+//   - An "item pool" of draggable/tappable item chips
+//   - A grid of "person plates" that act as drop targets
 function renderAssignments() {
     const container = document.getElementById("assignments");
 
     if (items.length === 0 || people.length === 0) {
         container.innerHTML = '<p class="empty-message">Add items and people first to assign them.</p>';
+        selectedItemId = null;
         return;
     }
 
+    // Clean up stale assignments (removed items/people)
+    for (let id in assignments) {
+        if (!items.find(function (it) { return it.id == id; })) {
+            delete assignments[id];
+        } else {
+            assignments[id] = assignments[id].filter(function (p) {
+                return people.includes(p);
+            });
+        }
+    }
+    // Initialize assignments for new items
+    for (let i = 0; i < items.length; i++) {
+        if (!assignments[items[i].id]) {
+            assignments[items[i].id] = [];
+        }
+    }
+
     let html = "";
+
+    // ---- Item pool ----
+    html += '<div class="item-pool">';
+    html += '<div class="pool-label">Tap an item, then tap a plate to assign — or drag directly</div>';
+    html += '<div class="item-chips">';
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        html += '<div class="assignment-card">';
-        html += '<div class="item-header">' + escapeHtml(item.name) + ' <span>($' + item.price.toFixed(2) + ')</span></div>';
-        html += '<div class="checkbox-group">';
+        const assigned = assignments[item.id] || [];
+        const isSelected = selectedItemId === item.id;
+        let cls = "item-chip";
+        if (isSelected) cls += " selected";
+        if (assigned.length > 0) cls += " assigned";
 
-        for (let j = 0; j < people.length; j++) {
-            const person = people[j];
-            // Each checkbox has a unique ID so we can read its value later
-            const checkboxId = "assign-" + item.id + "-" + j;
-            html += '<label>';
-            html += '<input type="checkbox" id="' + checkboxId + '" data-item-id="' + item.id + '" data-person="' + escapeHtml(person) + '">';
-            html += ' ' + escapeHtml(person);
-            html += '</label>';
+        html += '<div class="' + cls + '" data-item-id="' + item.id + '" draggable="true">';
+        html += '<span class="chip-name">' + escapeHtml(item.name) + '</span>';
+        html += '<span class="chip-price">$' + item.price.toFixed(2) + '</span>';
+        if (assigned.length > 1) {
+            html += '<span class="split-badge">&divide;' + assigned.length + '</span>';
+        } else if (assigned.length === 1) {
+            html += '<span class="assigned-badge">&check;</span>';
         }
-
-        html += '</div>';
         html += '</div>';
     }
+    html += '</div></div>';
+
+    // ---- Person plates ----
+    html += '<div class="person-plates">';
+    for (let j = 0; j < people.length; j++) {
+        const person = people[j];
+        const personItems = [];
+        let personTotal = 0;
+
+        for (let i = 0; i < items.length; i++) {
+            const a = assignments[items[i].id] || [];
+            if (a.includes(person)) {
+                const splitCount = a.length;
+                const splitPrice = items[i].price / splitCount;
+                personItems.push({ item: items[i], splitCount: splitCount, splitPrice: splitPrice });
+                personTotal += splitPrice;
+            }
+        }
+
+        html += '<div class="person-plate" data-person="' + escapeHtml(person) + '">';
+        html += '<div class="plate-header">';
+        html += '<span class="plate-name">' + escapeHtml(person) + '</span>';
+        html += '<span class="plate-total">' + (personTotal > 0 ? '$' + personTotal.toFixed(2) : '') + '</span>';
+        html += '</div>';
+        html += '<div class="plate-items">';
+
+        if (personItems.length === 0) {
+            html += '<div class="plate-empty">Drop items here</div>';
+        } else {
+            for (let k = 0; k < personItems.length; k++) {
+                const pi = personItems[k];
+                html += '<div class="plate-item animate-plate-item">';
+                html += '<span class="plate-item-name">' + escapeHtml(pi.item.name) + '</span>';
+                if (pi.splitCount > 1) {
+                    html += '<span class="plate-item-split">&divide;' + pi.splitCount + '</span>';
+                }
+                html += '<span class="plate-item-price">$' + pi.splitPrice.toFixed(2) + '</span>';
+                html += '<button class="plate-item-remove" data-item-id="' + pi.item.id + '" data-person="' + escapeHtml(person) + '">&times;</button>';
+                html += '</div>';
+            }
+        }
+
+        html += '</div></div>';
+    }
+    html += '</div>';
+
     container.innerHTML = html;
-    attachSparkleListeners();
+    attachDndListeners();
 }
 
 // ============================================================
-// SPARKLE EFFECT: stars burst out when a checkbox is checked
+// DRAG-AND-DROP + TAP-TO-ASSIGN LISTENERS
 // ============================================================
 
-function attachSparkleListeners() {
-    const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
-    for (let i = 0; i < checkboxes.length; i++) {
-        checkboxes[i].addEventListener("change", function () {
-            if (this.checked) {
-                spawnSparkles(this);
-                // Add a brief glow to the parent card
-                const card = this.closest(".assignment-card");
-                if (card) {
-                    card.classList.remove("glow");
-                    void card.offsetWidth; // force reflow to restart animation
-                    card.classList.add("glow");
-                }
+function attachDndListeners() {
+    const chips = document.querySelectorAll(".item-chip");
+    const plates = document.querySelectorAll(".person-plate");
+
+    // ---- Chip click: tap-to-select ----
+    for (let i = 0; i < chips.length; i++) {
+        chips[i].addEventListener("click", function (e) {
+            // Ignore if this was the end of a touch-drag
+            if (this._wasDragged) { this._wasDragged = false; return; }
+            const id = Number(this.getAttribute("data-item-id"));
+            selectedItemId = (selectedItemId === id) ? null : id;
+            renderAssignments();
+        });
+    }
+
+    // ---- Plate click: assign selected item ----
+    for (let i = 0; i < plates.length; i++) {
+        plates[i].addEventListener("click", function (e) {
+            // Don't trigger if clicking a remove button
+            if (e.target.closest(".plate-item-remove")) return;
+            if (selectedItemId === null) return;
+            const person = this.getAttribute("data-person");
+            toggleAssignment(selectedItemId, person);
+        });
+    }
+
+    // ---- HTML5 Drag and Drop (desktop) ----
+    for (let i = 0; i < chips.length; i++) {
+        chips[i].addEventListener("dragstart", function (e) {
+            dragItemId = Number(this.getAttribute("data-item-id"));
+            this.classList.add("dragging");
+            e.dataTransfer.effectAllowed = "copy";
+            e.dataTransfer.setData("text/plain", "");
+        });
+        chips[i].addEventListener("dragend", function () {
+            this.classList.remove("dragging");
+            dragItemId = null;
+            for (let p = 0; p < plates.length; p++) plates[p].classList.remove("drag-over");
+        });
+    }
+    for (let i = 0; i < plates.length; i++) {
+        plates[i].addEventListener("dragover", function (e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            this.classList.add("drag-over");
+        });
+        plates[i].addEventListener("dragleave", function () {
+            this.classList.remove("drag-over");
+        });
+        plates[i].addEventListener("drop", function (e) {
+            e.preventDefault();
+            this.classList.remove("drag-over");
+            if (dragItemId !== null) {
+                toggleAssignment(dragItemId, this.getAttribute("data-person"));
+                dragItemId = null;
             }
         });
     }
+
+    // ---- Remove buttons on plate items ----
+    const removeBtns = document.querySelectorAll(".plate-item-remove");
+    for (let i = 0; i < removeBtns.length; i++) {
+        removeBtns[i].addEventListener("click", function (e) {
+            e.stopPropagation();
+            const itemId = Number(this.getAttribute("data-item-id"));
+            const person = this.getAttribute("data-person");
+            unassignItem(itemId, person);
+        });
+    }
+
+    // ---- Touch drag (mobile) ----
+    attachTouchDrag(chips, plates);
 }
 
-function spawnSparkles(element) {
-    const rect = element.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2 + window.scrollX;
-    const centerY = rect.top + rect.height / 2 + window.scrollY;
-    const stars = ["\u2B50", "\u2728", "\u26A1", "\u2605"];
+// Touch-based drag for mobile devices (pointer events don't support
+// elementFromPoint during drag on all mobile browsers)
+function attachTouchDrag(chips, plates) {
+    for (let i = 0; i < chips.length; i++) {
+        (function (chip) {
+            var touchStartX, touchStartY, isDragging, ghost;
 
-    for (let i = 0; i < 6; i++) {
-        const star = document.createElement("span");
-        star.className = "sparkle-star";
-        star.textContent = stars[Math.floor(Math.random() * stars.length)];
+            chip.addEventListener("touchstart", function (e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isDragging = false;
+                ghost = null;
+                dragItemId = Number(chip.getAttribute("data-item-id"));
+            }, { passive: true });
 
-        // Random direction for each star
-        const angle = (Math.PI * 2 * i) / 6;
-        const distance = 18 + Math.random() * 16;
-        star.style.setProperty("--sx", Math.cos(angle) * distance + "px");
-        star.style.setProperty("--sy", Math.sin(angle) * distance + "px");
-        star.style.left = centerX + "px";
-        star.style.top = centerY + "px";
-        star.style.position = "absolute";
+            chip.addEventListener("touchmove", function (e) {
+                var dx = e.touches[0].clientX - touchStartX;
+                var dy = e.touches[0].clientY - touchStartY;
 
-        document.body.appendChild(star);
+                if (!isDragging && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+                    isDragging = true;
+                    ghost = chip.cloneNode(true);
+                    ghost.classList.add("drag-ghost");
+                    ghost.style.width = chip.offsetWidth + "px";
+                    document.body.appendChild(ghost);
+                    chip.classList.add("dragging");
+                }
+                if (isDragging && ghost) {
+                    e.preventDefault();
+                    ghost.style.left = (e.touches[0].clientX - ghost.offsetWidth / 2) + "px";
+                    ghost.style.top = (e.touches[0].clientY - ghost.offsetHeight / 2) + "px";
 
-        // Clean up after animation
-        setTimeout(function () {
-            star.remove();
-        }, 650);
+                    // Highlight the plate under the finger
+                    var el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+                    for (var p = 0; p < plates.length; p++) plates[p].classList.remove("drag-over");
+                    var plate = el ? el.closest(".person-plate") : null;
+                    if (plate) plate.classList.add("drag-over");
+                }
+            }, { passive: false });
+
+            chip.addEventListener("touchend", function (e) {
+                if (isDragging) {
+                    chip._wasDragged = true; // prevent click from firing
+                    var touch = e.changedTouches[0];
+                    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+                    var plate = el ? el.closest(".person-plate") : null;
+                    if (plate && dragItemId !== null) {
+                        toggleAssignment(dragItemId, plate.getAttribute("data-person"));
+                    }
+                    if (ghost) ghost.remove();
+                    chip.classList.remove("dragging");
+                }
+                isDragging = false;
+                dragItemId = null;
+                for (var p = 0; p < plates.length; p++) plates[p].classList.remove("drag-over");
+            });
+        })(chips[i]);
     }
+}
+
+// Toggle an item's assignment to a person (assign or unassign)
+function toggleAssignment(itemId, person) {
+    if (!assignments[itemId]) assignments[itemId] = [];
+    var idx = assignments[itemId].indexOf(person);
+    if (idx === -1) {
+        assignments[itemId].push(person);
+    } else {
+        assignments[itemId].splice(idx, 1);
+    }
+    renderAssignments();
+}
+
+// Remove a specific person from an item's assignment
+function unassignItem(itemId, person) {
+    if (!assignments[itemId]) return;
+    var idx = assignments[itemId].indexOf(person);
+    if (idx !== -1) {
+        assignments[itemId].splice(idx, 1);
+    }
+    renderAssignments();
 }
 
 // ============================================================
@@ -501,37 +681,25 @@ function calculate() {
         subtotal += items[i].price;
     }
 
-    // Go through each item and divide its cost among the checked people
+    // Go through each item and divide its cost among the assigned people
     let atLeastOneAssignment = false;
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        const assignedPeople = assignments[item.id] || [];
 
-        // Find all checkboxes for this item that are checked
-        const checkedPeople = [];
-        const checkboxes = document.querySelectorAll('input[data-item-id="' + item.id + '"]');
-        for (let j = 0; j < checkboxes.length; j++) {
-            if (checkboxes[j].checked) {
-                checkedPeople.push(checkboxes[j].getAttribute("data-person"));
-            }
-        }
-
-        // If nobody is checked for this item, skip it
-        if (checkedPeople.length === 0) {
-            continue;
-        }
+        if (assignedPeople.length === 0) continue;
 
         atLeastOneAssignment = true;
 
-        // Split the item price evenly among the checked people
-        const splitPrice = item.price / checkedPeople.length;
-        for (let k = 0; k < checkedPeople.length; k++) {
-            const person = checkedPeople[k];
+        // Split the item price evenly among the assigned people
+        const splitPrice = item.price / assignedPeople.length;
+        for (let k = 0; k < assignedPeople.length; k++) {
+            const person = assignedPeople[k];
             personSubtotals[person] += splitPrice;
 
-            // Track which items each person is paying for (for the summary)
-            if (checkedPeople.length > 1) {
+            if (assignedPeople.length > 1) {
                 personItemsList[person].push(
-                    item.name + " (split " + checkedPeople.length + " ways: $" + splitPrice.toFixed(2) + ")"
+                    item.name + " (split " + assignedPeople.length + " ways: $" + splitPrice.toFixed(2) + ")"
                 );
             } else {
                 personItemsList[person].push(
@@ -542,7 +710,7 @@ function calculate() {
     }
 
     if (!atLeastOneAssignment) {
-        alert("Please assign at least one item to a person using the checkboxes in Section 3.");
+        alert("Please assign at least one item to a person by dragging or tapping in Step 3.");
         return;
     }
 
