@@ -8,6 +8,42 @@ let assignments = {}; // itemId -> [person1, person2, ...]
 let selectedItemIds = new Set(); // currently tapped items for tap-to-assign
 let currentStep = 1;
 
+// Person color palette — each person gets a unique color
+var personColors = [
+    { hex: "#34C759", rgb: "52,199,89" },     // green
+    { hex: "#AF52DE", rgb: "175,82,222" },     // purple
+    { hex: "#FF9500", rgb: "255,149,0" },      // orange
+    { hex: "#FF2D55", rgb: "255,45,85" },      // pink
+    { hex: "#5AC8FA", rgb: "90,200,250" },     // teal
+    { hex: "#5856D6", rgb: "88,86,214" },      // indigo
+    { hex: "#FF6961", rgb: "255,105,97" },     // coral
+    { hex: "#00C7BE", rgb: "0,199,190" }       // mint
+];
+
+function getPersonColor(person) {
+    var idx = people.indexOf(person);
+    if (idx === -1) idx = 0;
+    return personColors[idx % personColors.length];
+}
+
+function getItemStyle(itemId, isSelected) {
+    if (isSelected) return ""; // CSS .selected class handles the blue border
+    var assigned = assignments[itemId] || [];
+    if (assigned.length === 0) return "";
+
+    if (assigned.length === 1) {
+        var c = getPersonColor(assigned[0]);
+        return "border-color:" + c.hex + ";background-color:rgba(" + c.rgb + ",0.06)";
+    }
+
+    // Multi-person: gradient border using background-clip trick
+    var stops = [];
+    for (var i = 0; i < assigned.length; i++) {
+        stops.push(getPersonColor(assigned[i]).hex);
+    }
+    return "border:2px solid transparent;background:rgba(120,120,128,0.04) padding-box,linear-gradient(135deg," + stops.join(",") + ") border-box";
+}
+
 // ============================================================
 // STEP NAVIGATION
 // ============================================================
@@ -493,14 +529,23 @@ function renderAssignments() {
             if (isSelected) cls += " selected";
             if (assigned.length > 0) cls += " assigned";
 
-            html += '<div class="' + cls + '" data-item-id="' + item.id + '">';
+            var inlineStyle = getItemStyle(item.id, isSelected);
+            html += '<div class="' + cls + '" data-item-id="' + item.id + '"' + (inlineStyle ? ' style="' + inlineStyle + '"' : '') + '>';
             html += '<span class="grid-card-emoji">' + getItemEmoji(item.name) + '</span>';
             html += '<span class="grid-card-name">' + escapeHtml(item.name) + '</span>';
             html += '<span class="grid-card-price">$' + item.price.toFixed(2) + '</span>';
             if (assigned.length > 1) {
-                html += '<span class="grid-card-badge split-badge">&divide;' + assigned.length + '</span>';
+                // Show colored dots for each person
+                var dotsHtml = '<span class="grid-card-badge">';
+                for (var d = 0; d < assigned.length; d++) {
+                    var dc = getPersonColor(assigned[d]);
+                    dotsHtml += '<span class="person-dot" style="background-color:' + dc.hex + '"></span>';
+                }
+                dotsHtml += '</span>';
+                html += dotsHtml;
             } else if (assigned.length === 1) {
-                html += '<span class="grid-card-badge assigned-badge">&check;</span>';
+                var ac = getPersonColor(assigned[0]);
+                html += '<span class="grid-card-badge assigned-badge" style="background-color:rgba(' + ac.rgb + ',0.12);color:' + ac.hex + '">&check;</span>';
             }
             html += '</div>';
         }
@@ -516,13 +561,21 @@ function renderAssignments() {
             if (isSelected) cls += " selected";
             if (assigned.length > 0) cls += " assigned";
 
-            html += '<div class="' + cls + '" data-item-id="' + item.id + '">';
+            var inlineStyle = getItemStyle(item.id, isSelected);
+            html += '<div class="' + cls + '" data-item-id="' + item.id + '"' + (inlineStyle ? ' style="' + inlineStyle + '"' : '') + '>';
             html += '<span class="list-row-emoji">' + getItemEmoji(item.name) + '</span>';
             html += '<span class="list-row-name">' + escapeHtml(item.name) + '</span>';
             if (assigned.length > 1) {
-                html += '<span class="split-badge">&divide;' + assigned.length + '</span>';
+                var dotsHtml = '<span class="person-dots">';
+                for (var d = 0; d < assigned.length; d++) {
+                    var dc = getPersonColor(assigned[d]);
+                    dotsHtml += '<span class="person-dot" style="background-color:' + dc.hex + '"></span>';
+                }
+                dotsHtml += '</span>';
+                html += dotsHtml;
             } else if (assigned.length === 1) {
-                html += '<span class="assigned-badge">&check;</span>';
+                var ac = getPersonColor(assigned[0]);
+                html += '<span class="assigned-badge" style="background-color:rgba(' + ac.rgb + ',0.12);color:' + ac.hex + '">&check;</span>';
             }
             html += '<span class="list-row-price">$' + item.price.toFixed(2) + '</span>';
             html += '</div>';
@@ -538,15 +591,25 @@ function renderAssignments() {
     html += '<div class="person-btns">';
     for (var j = 0; j < people.length; j++) {
         var person = people[j];
+        var pColor = getPersonColor(person);
         var personHasItems = false;
         for (var k = 0; k < items.length; k++) {
             var a = assignments[items[k].id] || [];
             if (a.includes(person)) { personHasItems = true; break; }
         }
         var btnCls = "person-assign-btn";
-        if (hasSelection) btnCls += " ready";
-        if (personHasItems) btnCls += " has-items";
-        html += '<button class="' + btnCls + '" data-person="' + escapeHtml(person) + '">' + escapeHtml(person) + '</button>';
+        var btnStyle = "";
+        if (hasSelection) {
+            btnCls += " ready";
+            btnStyle = "border-color:" + pColor.hex + ";color:" + pColor.hex + ";background-color:rgba(" + pColor.rgb + ",0.08)";
+        } else if (personHasItems) {
+            btnCls += " has-items";
+            btnStyle = "border-color:rgba(" + pColor.rgb + ",0.3)";
+        }
+        html += '<button class="' + btnCls + '"' + (btnStyle ? ' style="' + btnStyle + '"' : '') + ' data-person="' + escapeHtml(person) + '">';
+        html += '<span class="person-color-dot" style="background-color:' + pColor.hex + '"></span>';
+        html += escapeHtml(person);
+        html += '</button>';
     }
     html += '</div></div>';
 
@@ -577,10 +640,11 @@ function renderAssignments() {
 
             if (personItems.length === 0) continue;
 
-            html += '<div class="summary-card">';
+            var sc = getPersonColor(person);
+            html += '<div class="summary-card" style="border-left:3px solid ' + sc.hex + '">';
             html += '<div class="summary-card-header">';
-            html += '<span class="summary-card-name">' + escapeHtml(person) + '</span>';
-            html += '<span class="summary-card-total">$' + personTotal.toFixed(2) + '</span>';
+            html += '<span class="summary-card-name"><span class="person-color-dot" style="background-color:' + sc.hex + '"></span>' + escapeHtml(person) + '</span>';
+            html += '<span class="summary-card-total" style="color:' + sc.hex + '">$' + personTotal.toFixed(2) + '</span>';
             html += '</div>';
             html += '<div class="summary-card-items">';
 
@@ -756,15 +820,16 @@ function calculate() {
 
         grandTotal += personTotal;
 
-        html += '<div class="person-summary">';
-        html += '<div class="person-name">' + escapeHtml(person) + '</div>';
+        var pc = getPersonColor(person);
+        html += '<div class="person-summary" style="border-left-color:' + pc.hex + '">';
+        html += '<div class="person-name"><span class="person-color-dot" style="background-color:' + pc.hex + '"></span>' + escapeHtml(person) + '</div>';
         html += '<div class="person-items">' + escapeHtml(personItemsList[person].join(", ") || "No items assigned") + '</div>';
         html += '<div class="person-items">';
         html += 'Food: $' + foodCost.toFixed(2);
         html += ' + Tax: $' + personTax.toFixed(2);
         html += ' + Tip: $' + personTip.toFixed(2);
         html += '</div>';
-        html += '<div class="person-total">Owes: $' + personTotal.toFixed(2) + '</div>';
+        html += '<div class="person-total" style="color:' + pc.hex + '">Owes: $' + personTotal.toFixed(2) + '</div>';
         html += '</div>';
     }
 

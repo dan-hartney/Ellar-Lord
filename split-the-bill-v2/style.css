@@ -382,6 +382,32 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .pool-action:hover { background: none; }
 
+/* --- Person color indicators --- */
+.person-color-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.person-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin: 0 1px;
+}
+
+.person-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
 /* --- Shared badges --- */
 .split-badge,
 .assigned-badge {
@@ -424,15 +450,16 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
 .item-grid-card:active { transform: scale(0.96); }
 
 .item-grid-card.selected {
-    border-color: var(--color-primary);
-    background-color: var(--color-tint-bg);
+    border-color: var(--color-primary) !important;
+    background-color: var(--color-tint-bg) !important;
+    background-image: none !important;
 }
 
-.item-grid-card.assigned { background-color: rgba(52, 199, 89, 0.06); }
+/* .assigned background is set via inline style with person color */
 
 .item-grid-card.assigned.selected {
-    background-color: var(--color-tint-bg);
-    border-color: var(--color-primary);
+    background-color: var(--color-tint-bg) !important;
+    border-color: var(--color-primary) !important;
 }
 
 .grid-card-emoji {
@@ -490,15 +517,16 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
 .item-list-row:active { transform: scale(0.98); }
 
 .item-list-row.selected {
-    border-color: var(--color-primary);
-    background-color: var(--color-tint-bg);
+    border-color: var(--color-primary) !important;
+    background-color: var(--color-tint-bg) !important;
+    background-image: none !important;
 }
 
-.item-list-row.assigned { background-color: rgba(52, 199, 89, 0.06); }
+/* .assigned background is set via inline style with person color */
 
 .item-list-row.assigned.selected {
-    background-color: var(--color-tint-bg);
-    border-color: var(--color-primary);
+    background-color: var(--color-tint-bg) !important;
+    border-color: var(--color-primary) !important;
 }
 
 .list-row-emoji {
@@ -556,6 +584,9 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
 }
 
 .person-assign-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
     padding: 14px 24px;
     background-color: var(--color-fill);
     border: 1.5px solid var(--color-separator);
@@ -568,19 +599,11 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
     -webkit-tap-highlight-color: transparent;
 }
 
-.person-assign-btn.ready {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background-color: var(--color-tint-bg);
-}
+/* .ready and .has-items colors set via inline styles with person color */
 
 .person-assign-btn.ready:active {
     transform: scale(0.95);
-    background-color: rgba(0, 122, 255, 0.15);
-}
-
-.person-assign-btn.has-items {
-    border-color: rgba(52, 199, 89, 0.3);
+    filter: brightness(0.92);
 }
 
 /* Assignment summary */
@@ -609,7 +632,7 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
     margin-bottom: 6px;
 }
 
-.summary-card-name { font-weight: 600; font-size: 15px; }
+.summary-card-name { font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; }
 .summary-card-total { font-weight: 600; font-size: 14px; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 
 .summary-card-items {
@@ -654,7 +677,7 @@ td.price { font-weight: 600; font-variant-numeric: tabular-nums; }
     margin-bottom: 10px;
 }
 
-.person-summary .person-name { font-weight: 600; font-size: 17px; margin-bottom: 4px; }
+.person-summary .person-name { font-weight: 600; font-size: 17px; margin-bottom: 4px; display: flex; align-items: center; }
 .person-summary .person-items { font-size: 13px; color: var(--color-secondary-label); margin-bottom: 4px; line-height: 1.5; }
 .person-summary .person-total { font-size: 20px; font-weight: 700; color: var(--color-primary); margin-top: 6px; font-variant-numeric: tabular-nums; }
 
