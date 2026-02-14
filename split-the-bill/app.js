@@ -36,32 +36,51 @@ document.getElementById("receipt-input").addEventListener("change", function (ev
     spinner.style.display = "";
     statusText.textContent = "Loading image...";
 
-    // Show the image preview
+    // Show the image preview using a blob URL (instant, no memory issues
+    // on mobile — avoids the massive base64 string from readAsDataURL)
     var preview = document.getElementById("receipt-preview");
     var img = document.getElementById("receipt-image");
     var uploadArea = document.getElementById("upload-area");
 
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        img.src = e.target.result;
-        preview.style.display = "block";
-        uploadArea.style.display = "none";
+    var blobUrl = URL.createObjectURL(file);
+    img.src = blobUrl;
+    preview.style.display = "block";
+    uploadArea.style.display = "none";
 
-        // Check that Tesseract loaded
+    // Load into a temporary Image so we can resize via canvas before OCR.
+    // Mobile photos can be 12+ megapixels — sending that raw to Tesseract
+    // is slow and can crash mobile browsers.
+    var tempImg = new Image();
+    tempImg.onload = function () {
+        var maxDim = 2000;
+        var w = tempImg.naturalWidth;
+        var h = tempImg.naturalHeight;
+        if (w > maxDim || h > maxDim) {
+            var scale = maxDim / Math.max(w, h);
+            w = Math.round(w * scale);
+            h = Math.round(h * scale);
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(tempImg, 0, 0, w, h);
+        URL.revokeObjectURL(blobUrl);
+
         if (typeof Tesseract === "undefined") {
             statusText.textContent = "OCR library failed to load. Check your internet connection and reload.";
             spinner.style.display = "none";
             return;
         }
 
-        // Start OCR
-        runOCR(e.target.result);
+        // Pass the resized canvas directly to Tesseract (accepts canvas elements)
+        runOCR(canvas);
     };
-    reader.onerror = function () {
-        statusText.textContent = "Could not read the image file. Try another photo.";
+    tempImg.onerror = function () {
+        statusText.textContent = "Could not load the image. Try another photo.";
         spinner.style.display = "none";
+        URL.revokeObjectURL(blobUrl);
     };
-    reader.readAsDataURL(file);
+    tempImg.src = blobUrl;
 });
 
 // Clear the uploaded receipt and reset
