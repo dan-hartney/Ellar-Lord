@@ -11,24 +11,50 @@ let ocrResults = []; // holds parsed items from receipt scan
 // RECEIPT UPLOAD & OCR
 // ============================================================
 
+// Make the upload area also work via click (some mobile browsers need this)
+document.getElementById("upload-area").addEventListener("click", function () {
+    document.getElementById("receipt-input").click();
+});
+
 // Listen for file selection on the receipt input
 document.getElementById("receipt-input").addEventListener("change", function (event) {
-    const file = event.target.files[0];
+    var file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    // Show the image preview
-    const preview = document.getElementById("receipt-preview");
-    const img = document.getElementById("receipt-image");
-    const uploadArea = document.getElementById("upload-area");
+    // Show loading immediately so the user knows something is happening
+    var statusEl = document.getElementById("ocr-status");
+    var statusText = document.getElementById("ocr-status-text");
+    var spinner = document.querySelector(".ocr-spinner");
+    statusEl.style.display = "flex";
+    statusEl.style.backgroundColor = "#F0F6FF";
+    statusEl.style.color = "#118AB2";
+    spinner.style.display = "";
+    statusText.textContent = "Loading image...";
 
-    const reader = new FileReader();
+    // Show the image preview
+    var preview = document.getElementById("receipt-preview");
+    var img = document.getElementById("receipt-image");
+    var uploadArea = document.getElementById("upload-area");
+
+    var reader = new FileReader();
     reader.onload = function (e) {
         img.src = e.target.result;
         preview.style.display = "block";
         uploadArea.style.display = "none";
 
+        // Check that Tesseract loaded
+        if (typeof Tesseract === "undefined") {
+            statusText.textContent = "OCR library failed to load. Check your internet connection and reload.";
+            spinner.style.display = "none";
+            return;
+        }
+
         // Start OCR
         runOCR(e.target.result);
+    };
+    reader.onerror = function () {
+        statusText.textContent = "Could not read the image file. Try another photo.";
+        spinner.style.display = "none";
     };
     reader.readAsDataURL(file);
 });
@@ -40,24 +66,39 @@ function clearReceipt() {
     document.getElementById("ocr-status").style.display = "none";
     document.getElementById("ocr-results").style.display = "none";
     document.getElementById("receipt-input").value = "";
+    document.querySelector(".ocr-spinner").style.display = "";
     ocrResults = [];
 }
 
 // Run Tesseract.js OCR on the image
 function runOCR(imageData) {
-    const statusEl = document.getElementById("ocr-status");
-    const statusText = document.getElementById("ocr-status-text");
-    const resultsEl = document.getElementById("ocr-results");
+    var statusEl = document.getElementById("ocr-status");
+    var statusText = document.getElementById("ocr-status-text");
+    var resultsEl = document.getElementById("ocr-results");
+    var spinner = document.querySelector(".ocr-spinner");
 
     statusEl.style.display = "flex";
+    statusEl.style.backgroundColor = "#F0F6FF";
+    statusEl.style.color = "#118AB2";
+    spinner.style.display = "";
     resultsEl.style.display = "none";
-    statusText.textContent = "Reading receipt...";
+    statusText.textContent = "Downloading OCR model (first time only)...";
 
     Tesseract.recognize(imageData, "eng", {
         logger: function (info) {
-            if (info.status === "recognizing text") {
-                const pct = Math.round(info.progress * 100);
-                statusText.textContent = "Reading receipt... " + pct + "%";
+            // Show different messages for each phase
+            if (info.status === "loading tesseract core") {
+                statusText.textContent = "Loading OCR engine...";
+            } else if (info.status === "initializing tesseract") {
+                statusText.textContent = "Initializing OCR...";
+            } else if (info.status === "loading language traineddata") {
+                var pct = Math.round(info.progress * 100);
+                statusText.textContent = "Downloading language data... " + pct + "%";
+            } else if (info.status === "initializing api") {
+                statusText.textContent = "Preparing to read...";
+            } else if (info.status === "recognizing text") {
+                var pct2 = Math.round(info.progress * 100);
+                statusText.textContent = "Reading receipt... " + pct2 + "%";
             }
         }
     }).then(function (result) {
@@ -67,7 +108,7 @@ function runOCR(imageData) {
         if (parsedItems.length === 0) {
             statusEl.style.display = "flex";
             statusText.textContent = "No items found. Try a clearer photo or enter items manually.";
-            document.querySelector(".ocr-spinner").style.display = "none";
+            spinner.style.display = "none";
             return;
         }
 
@@ -75,8 +116,8 @@ function runOCR(imageData) {
         renderOcrResults();
     }).catch(function (err) {
         statusEl.style.display = "flex";
-        statusText.textContent = "Error reading receipt. Please try again.";
-        document.querySelector(".ocr-spinner").style.display = "none";
+        statusText.textContent = "Error: " + (err.message || "Could not read receipt. Please try again.");
+        spinner.style.display = "none";
     });
 }
 
