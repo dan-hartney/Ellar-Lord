@@ -470,8 +470,9 @@ function renderAssignments() {
 
     var html = "";
     var hasSelection = selectedItemIds.size > 0;
+    var useGrid = items.length <= 12;
 
-    // ---- Item pool ----
+    // ---- Status label ----
     html += '<div class="item-pool">';
     if (hasSelection) {
         var selCount = selectedItemIds.size;
@@ -480,34 +481,63 @@ function renderAssignments() {
     } else {
         html += '<div class="pool-label">Tap items to select, then tap a name to assign</div>';
     }
-    html += '<div class="item-chips">';
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        var assigned = assignments[item.id] || [];
-        var isSelected = selectedItemIds.has(item.id);
-        var cls = "item-chip";
-        if (isSelected) cls += " selected";
-        if (assigned.length > 0) cls += " assigned";
 
-        html += '<div class="' + cls + '" data-item-id="' + item.id + '">';
-        html += '<span class="chip-name">' + escapeHtml(item.name) + '</span>';
-        html += '<span class="chip-price">$' + item.price.toFixed(2) + '</span>';
-        if (assigned.length > 1) {
-            html += '<span class="split-badge">&divide;' + assigned.length + '</span>';
-        } else if (assigned.length === 1) {
-            html += '<span class="assigned-badge">&check;</span>';
+    if (useGrid) {
+        // ---- VARIATION B: Two-column grid cards (≤12 items) ----
+        html += '<div class="item-grid">';
+        for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            var assigned = assignments[item.id] || [];
+            var isSelected = selectedItemIds.has(item.id);
+            var cls = "item-grid-card";
+            if (isSelected) cls += " selected";
+            if (assigned.length > 0) cls += " assigned";
+
+            html += '<div class="' + cls + '" data-item-id="' + item.id + '">';
+            html += '<span class="grid-card-emoji">' + getItemEmoji(item.name) + '</span>';
+            html += '<span class="grid-card-name">' + escapeHtml(item.name) + '</span>';
+            html += '<span class="grid-card-price">$' + item.price.toFixed(2) + '</span>';
+            if (assigned.length > 1) {
+                html += '<span class="grid-card-badge split-badge">&divide;' + assigned.length + '</span>';
+            } else if (assigned.length === 1) {
+                html += '<span class="grid-card-badge assigned-badge">&check;</span>';
+            }
+            html += '</div>';
+        }
+        html += '</div>';
+    } else {
+        // ---- VARIATION A: Compact list rows (>12 items) ----
+        html += '<div class="item-list">';
+        for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            var assigned = assignments[item.id] || [];
+            var isSelected = selectedItemIds.has(item.id);
+            var cls = "item-list-row";
+            if (isSelected) cls += " selected";
+            if (assigned.length > 0) cls += " assigned";
+
+            html += '<div class="' + cls + '" data-item-id="' + item.id + '">';
+            html += '<span class="list-row-emoji">' + getItemEmoji(item.name) + '</span>';
+            html += '<span class="list-row-name">' + escapeHtml(item.name) + '</span>';
+            if (assigned.length > 1) {
+                html += '<span class="split-badge">&divide;' + assigned.length + '</span>';
+            } else if (assigned.length === 1) {
+                html += '<span class="assigned-badge">&check;</span>';
+            }
+            html += '<span class="list-row-price">$' + item.price.toFixed(2) + '</span>';
+            html += '</div>';
         }
         html += '</div>';
     }
-    html += '</div></div>';
 
-    // ---- Person assign buttons ----
-    html += '<div class="assign-to-section">';
+    html += '</div>'; // close .item-pool
+
+    // ---- Sticky person bar ----
+    html += '<div class="person-bar" id="person-bar">';
     html += '<div class="assign-to-label' + (hasSelection ? ' ready' : '') + '">' + (hasSelection ? 'Assign to:' : 'Select items above first') + '</div>';
     html += '<div class="person-btns">';
     for (var j = 0; j < people.length; j++) {
         var person = people[j];
-        // Check if this person has any items assigned
         var personHasItems = false;
         for (var k = 0; k < items.length; k++) {
             var a = assignments[items[k].id] || [];
@@ -557,6 +587,7 @@ function renderAssignments() {
             for (var m = 0; m < personItems.length; m++) {
                 var pi = personItems[m];
                 html += '<span class="summary-item">';
+                html += '<span class="summary-item-emoji">' + getItemEmoji(pi.item.name) + '</span>';
                 html += escapeHtml(pi.item.name);
                 if (pi.splitCount > 1) {
                     html += ' <span class="summary-item-split">&divide;' + pi.splitCount + '</span>';
@@ -581,7 +612,7 @@ function renderAssignments() {
 // ============================================================
 
 function attachTapListeners() {
-    var chips = document.querySelectorAll(".item-chip");
+    var chips = document.querySelectorAll(".item-grid-card, .item-list-row");
     var personBtns = document.querySelectorAll(".person-assign-btn");
 
     // Chip tap: toggle selection
@@ -777,6 +808,59 @@ function launchConfetti(container) {
             particle.remove();
         }, 1500);
     }
+}
+
+// ============================================================
+// EMOJI AUTO-DETECTION
+// ============================================================
+
+var emojiMap = [
+    { keywords: ["burger", "hamburger", "cheeseburger"], emoji: "\u{1F354}" },
+    { keywords: ["pizza", "margherita", "pepperoni"], emoji: "\u{1F355}" },
+    { keywords: ["beer", "ale", "ipa", "lager", "draft", "draught", "pilsner", "stout"], emoji: "\u{1F37A}" },
+    { keywords: ["wine", "merlot", "cabernet", "pinot", "chardonnay", "ros\u00e9", "rose"], emoji: "\u{1F377}" },
+    { keywords: ["cocktail", "margarita", "mojito", "martini", "daiquiri", "negroni", "spritz"], emoji: "\u{1F378}" },
+    { keywords: ["coffee", "latte", "espresso", "cappuccino", "americano", "mocha", "macchiato"], emoji: "\u2615" },
+    { keywords: ["tea", "chai", "matcha"], emoji: "\u{1F375}" },
+    { keywords: ["salad", "caesar", "greens", "arugula", "kale"], emoji: "\u{1F957}" },
+    { keywords: ["steak", "ribeye", "filet", "sirloin", "prime rib", "t-bone"], emoji: "\u{1F969}" },
+    { keywords: ["chicken", "wings", "drumstick", "tender"], emoji: "\u{1F357}" },
+    { keywords: ["fish", "salmon", "tuna", "cod", "halibut", "trout", "sea bass", "mahi"], emoji: "\u{1F41F}" },
+    { keywords: ["shrimp", "prawn", "scampi", "crab", "lobster", "crawfish"], emoji: "\u{1F990}" },
+    { keywords: ["pasta", "spaghetti", "penne", "fettuccine", "linguine", "rigatoni", "carbonara", "bolognese"], emoji: "\u{1F35D}" },
+    { keywords: ["soup", "chowder", "bisque", "ramen", "pho", "broth"], emoji: "\u{1F35C}" },
+    { keywords: ["fries", "french fries", "frite", "chips"], emoji: "\u{1F35F}" },
+    { keywords: ["taco", "burrito", "quesadilla", "enchilada", "nacho"], emoji: "\u{1F32E}" },
+    { keywords: ["sushi", "sashimi", "roll", "nigiri", "maki"], emoji: "\u{1F363}" },
+    { keywords: ["cake", "brownie", "cheesecake", "tiramisu", "mousse", "creme brulee"], emoji: "\u{1F370}" },
+    { keywords: ["ice cream", "gelato", "sundae", "sorbet"], emoji: "\u{1F368}" },
+    { keywords: ["dessert", "pudding", "pie", "tart", "cobbler"], emoji: "\u{1F36E}" },
+    { keywords: ["water", "sparkling", "pellegrino", "perrier", "aqua"], emoji: "\u{1F4A7}" },
+    { keywords: ["soda", "coke", "pepsi", "sprite", "lemonade", "ginger ale"], emoji: "\u{1F964}" },
+    { keywords: ["juice", "orange juice", "oj", "smoothie"], emoji: "\u{1F9C3}" },
+    { keywords: ["sandwich", "sub", "wrap", "panini", "club", "blt", "reuben"], emoji: "\u{1F96A}" },
+    { keywords: ["egg", "eggs", "omelet", "omelette", "frittata", "benedict"], emoji: "\u{1F95A}" },
+    { keywords: ["bread", "toast", "baguette", "roll", "garlic bread"], emoji: "\u{1F35E}" },
+    { keywords: ["rice", "fried rice", "pilaf", "risotto"], emoji: "\u{1F35A}" },
+    { keywords: ["curry", "tikka", "masala", "korma", "vindaloo"], emoji: "\u{1F35B}" },
+    { keywords: ["hot dog", "hotdog", "bratwurst", "sausage"], emoji: "\u{1F32D}" },
+    { keywords: ["waffle", "pancake", "crepe", "french toast"], emoji: "\u{1F9C7}" },
+    { keywords: ["bacon", "ham", "pork", "ribs", "pulled pork"], emoji: "\u{1F953}" },
+    { keywords: ["appetizer", "app", "starter", "bruschetta", "calamari"], emoji: "\u{1F958}" },
+    { keywords: ["dip", "guac", "guacamole", "hummus", "salsa", "queso"], emoji: "\u{1F96B}" }
+];
+
+function getItemEmoji(name) {
+    var lower = name.toLowerCase();
+    for (var i = 0; i < emojiMap.length; i++) {
+        var entry = emojiMap[i];
+        for (var k = 0; k < entry.keywords.length; k++) {
+            if (lower.indexOf(entry.keywords[k]) !== -1) {
+                return entry.emoji;
+            }
+        }
+    }
+    return "\u{1F37D}\u{FE0F}"; // plate with cutlery fallback
 }
 
 // ============================================================
