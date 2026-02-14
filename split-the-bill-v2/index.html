@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Split Bill">
+    <meta name="theme-color" content="#F2F2F7">
+    <title>Split the Bill</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-header">
+        <h1>Split the Bill</h1>
+        <p class="app-subtitle">Easily split receipts with friends</p>
+    </div>
+
+    <!-- SECTION 0: Upload Receipt (optional) -->
+    <div class="section upload-section">
+        <div class="section-title"><span class="step-badge camera-badge">&#x1F4F7;</span><h2>Scan a Receipt</h2></div>
+        <p>Take a photo or upload an image of your receipt to auto-fill items:</p>
+        <div class="upload-area" id="upload-area">
+            <div class="upload-icon">&#x1F4C4;</div>
+            <div class="upload-text">Tap to upload or take a photo</div>
+            <div class="upload-hint">Supports JPG, PNG, HEIC</div>
+            <input type="file" id="receipt-input" accept="image/*">
+        </div>
+        <div id="receipt-preview" class="receipt-preview" style="display:none;">
+            <img id="receipt-image" alt="Receipt preview">
+            <button class="remove-btn" onclick="clearReceipt()">Remove</button>
+        </div>
+        <div id="ocr-status" class="ocr-status" style="display:none;">
+            <div class="ocr-spinner"></div>
+            <span id="ocr-status-text">Reading receipt...</span>
+        </div>
+        <div id="ocr-results" style="display:none;">
+            <p class="ocr-results-header">Found these items — uncheck any you don't want:</p>
+            <div id="ocr-items-list"></div>
+            <button class="calculate-btn" onclick="addSelectedOcrItems()">Add Checked Items</button>
+        </div>
+    </div>
+
+    <div class="section-divider">
+        <span>or enter items manually</span>
+    </div>
+
+    <!-- SECTION 1: Add receipt items -->
+    <div class="section">
+        <div class="section-title"><span class="step-badge">1</span><h2>Add Receipt Items</h2></div>
+        <p>Enter each item from the receipt:</p>
+        <div class="input-row">
+            <input type="text" id="item-name" placeholder="Item name (e.g. Burger)">
+            <input type="number" id="item-price" placeholder="Price (e.g. 12.99)" step="0.01" min="0">
+            <button onclick="addItem()">Add Item</button>
+        </div>
+        <table id="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+                <!-- Items will appear here -->
+            </tbody>
+        </table>
+        <p class="subtotal">Subtotal: $<span id="subtotal">0.00</span></p>
+    </div>
+
+    <!-- SECTION 2: Add people -->
+    <div class="section">
+        <div class="section-title"><span class="step-badge">2</span><h2>Add People</h2></div>
+        <p>Enter the name of each person splitting the bill:</p>
+        <div class="input-row">
+            <input type="text" id="person-name" placeholder="Person's name (e.g. Alice)">
+            <button onclick="addPerson()">Add Person</button>
+        </div>
+        <div id="people-list">
+            <!-- People will appear here -->
+        </div>
+    </div>
+
+    <!-- SECTION 3: Assign items to people -->
+    <div class="section">
+        <div class="section-title"><span class="step-badge">3</span><h2>Assign Items to People</h2></div>
+        <p>Drag items to each person's plate, or tap an item then tap a plate. Shared items split evenly.</p>
+        <div id="assignments">
+            <!-- Assignment checkboxes will appear here -->
+        </div>
+    </div>
+
+    <!-- SECTION 4: Tax and Tip -->
+    <div class="section">
+        <div class="section-title"><span class="step-badge">4</span><h2>Tax &amp; Tip</h2></div>
+        <div class="input-row">
+            <label for="tax-amount">Tax ($):</label>
+            <input type="number" id="tax-amount" placeholder="e.g. 5.50" step="0.01" min="0" value="0">
+        </div>
+        <div class="input-row">
+            <label for="tip-amount">Tip ($):</label>
+            <input type="number" id="tip-amount" placeholder="e.g. 10.00" step="0.01" min="0" value="0">
+        </div>
+    </div>
+
+    <!-- SECTION 5: Calculate and show summary -->
+    <div class="section">
+        <div class="section-title"><span class="step-badge">5</span><h2>Summary</h2></div>
+        <button class="calculate-btn" onclick="calculate()">Calculate What Each Person Owes</button>
+        <div id="summary">
+            <!-- Summary will appear here -->
+        </div>
+        <p class="grand-total">Grand Total: $<span id="grand-total">0.00</span></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
