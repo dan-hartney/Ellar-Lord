@@ -82,6 +82,12 @@ function renderItems() {
 
     tbody.innerHTML = html;
     subtotalSpan.textContent = subtotal.toFixed(2);
+
+    // Animate the last (newest) row
+    const rows = tbody.querySelectorAll("tr");
+    if (rows.length > 0) {
+        rows[rows.length - 1].classList.add("animate-in");
+    }
 }
 
 // ============================================================
@@ -123,6 +129,7 @@ function removePerson(name) {
 }
 
 // This function redraws the people tags on the page
+// The newest person gets a pop-in animation with a waving hand
 function renderPeople() {
     const container = document.getElementById("people-list");
 
@@ -133,7 +140,11 @@ function renderPeople() {
 
     let html = "";
     for (let i = 0; i < people.length; i++) {
-        html += '<span class="person-tag">';
+        const isNewest = (i === people.length - 1);
+        html += '<span class="person-tag' + (isNewest ? ' animate-in' : '') + '">';
+        if (isNewest) {
+            html += '<span class="wave-emoji">&#x1F44B;</span> ';
+        }
         html += escapeHtml(people[i]);
         html += '<button class="remove-person" onclick="removePerson(\'' + escapeJs(people[i]) + '\')">&times;</button>';
         html += '</span>';
@@ -177,6 +188,58 @@ function renderAssignments() {
         html += '</div>';
     }
     container.innerHTML = html;
+    attachSparkleListeners();
+}
+
+// ============================================================
+// SPARKLE EFFECT: stars burst out when a checkbox is checked
+// ============================================================
+
+function attachSparkleListeners() {
+    const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+    for (let i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].addEventListener("change", function () {
+            if (this.checked) {
+                spawnSparkles(this);
+                // Add a brief glow to the parent card
+                const card = this.closest(".assignment-card");
+                if (card) {
+                    card.classList.remove("glow");
+                    void card.offsetWidth; // force reflow to restart animation
+                    card.classList.add("glow");
+                }
+            }
+        });
+    }
+}
+
+function spawnSparkles(element) {
+    const rect = element.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2 + window.scrollX;
+    const centerY = rect.top + rect.height / 2 + window.scrollY;
+    const stars = ["\u2B50", "\u2728", "\u26A1", "\u2605"];
+
+    for (let i = 0; i < 6; i++) {
+        const star = document.createElement("span");
+        star.className = "sparkle-star";
+        star.textContent = stars[Math.floor(Math.random() * stars.length)];
+
+        // Random direction for each star
+        const angle = (Math.PI * 2 * i) / 6;
+        const distance = 18 + Math.random() * 16;
+        star.style.setProperty("--sx", Math.cos(angle) * distance + "px");
+        star.style.setProperty("--sy", Math.sin(angle) * distance + "px");
+        star.style.left = centerX + "px";
+        star.style.top = centerY + "px";
+        star.style.position = "absolute";
+
+        document.body.appendChild(star);
+
+        // Clean up after animation
+        setTimeout(function () {
+            star.remove();
+        }, 650);
+    }
 }
 
 // ============================================================
@@ -296,6 +359,48 @@ function calculate() {
 
     summaryContainer.innerHTML = html;
     document.getElementById("grand-total").textContent = grandTotal.toFixed(2);
+
+    // Stagger the slide-in animation for each person's summary card
+    const summaryCards = summaryContainer.querySelectorAll(".person-summary");
+    for (let i = 0; i < summaryCards.length; i++) {
+        summaryCards[i].classList.add("animate-in");
+        summaryCards[i].style.animationDelay = (i * 0.12) + "s";
+    }
+
+    // Launch confetti celebration!
+    launchConfetti(summaryContainer);
+}
+
+// ============================================================
+// CONFETTI CELEBRATION
+// ============================================================
+
+function launchConfetti(container) {
+    const rect = container.getBoundingClientRect();
+    const colors = ["#E8461E", "#FF8C42", "#FFD166", "#06D6A0", "#118AB2", "#EF476F"];
+
+    for (let i = 0; i < 40; i++) {
+        const particle = document.createElement("div");
+        particle.className = "confetti-particle";
+
+        // Random position across the top of the summary area
+        const startX = rect.left + Math.random() * rect.width + window.scrollX;
+        const startY = rect.top + window.scrollY - 10;
+        particle.style.left = startX + "px";
+        particle.style.top = startY + "px";
+        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+        particle.style.setProperty("--duration", (0.6 + Math.random() * 0.8) + "s");
+
+        // Slight horizontal drift
+        particle.style.marginLeft = (Math.random() * 40 - 20) + "px";
+
+        document.body.appendChild(particle);
+
+        setTimeout(function () {
+            particle.remove();
+        }, 1500);
+    }
 }
 
 // ============================================================
