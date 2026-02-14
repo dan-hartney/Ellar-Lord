@@ -18,6 +18,35 @@
         <p class="app-subtitle">Easily split receipts with friends</p>
     </div>
 
+    <!-- SECTION 0: Upload Receipt (optional) -->
+    <div class="section upload-section">
+        <div class="section-title"><span class="step-badge camera-badge">&#x1F4F7;</span><h2>Scan a Receipt</h2></div>
+        <p>Take a photo or upload an image of your receipt to auto-fill items:</p>
+        <div class="upload-area" id="upload-area">
+            <div class="upload-icon">&#x1F4C4;</div>
+            <div class="upload-text">Tap to upload or take a photo</div>
+            <div class="upload-hint">Supports JPG, PNG, HEIC</div>
+            <input type="file" id="receipt-input" accept="image/*" capture="environment">
+        </div>
+        <div id="receipt-preview" class="receipt-preview" style="display:none;">
+            <img id="receipt-image" alt="Receipt preview">
+            <button class="remove-btn" onclick="clearReceipt()">Remove</button>
+        </div>
+        <div id="ocr-status" class="ocr-status" style="display:none;">
+            <div class="ocr-spinner"></div>
+            <span id="ocr-status-text">Reading receipt...</span>
+        </div>
+        <div id="ocr-results" style="display:none;">
+            <p class="ocr-results-header">Found these items — uncheck any you don't want:</p>
+            <div id="ocr-items-list"></div>
+            <button class="calculate-btn" onclick="addSelectedOcrItems()">Add Checked Items</button>
+        </div>
+    </div>
+
+    <div class="section-divider">
+        <span>or enter items manually</span>
+    </div>
+
     <!-- SECTION 1: Add receipt items -->
     <div class="section">
         <div class="section-title"><span class="step-badge">1</span><h2>Add Receipt Items</h2></div>
@@ -87,6 +116,7 @@
         <p class="grand-total">Grand Total: $<span id="grand-total">0.00</span></p>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

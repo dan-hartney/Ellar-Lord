@@ -5,6 +5,189 @@
 // ============================================================
 let items = [];
 let people = [];
+let ocrResults = []; // holds parsed items from receipt scan
+
+// ============================================================
+// RECEIPT UPLOAD & OCR
+// ============================================================
+
+// Listen for file selection on the receipt input
+document.getElementById("receipt-input").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Show the image preview
+    const preview = document.getElementById("receipt-preview");
+    const img = document.getElementById("receipt-image");
+    const uploadArea = document.getElementById("upload-area");
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        img.src = e.target.result;
+        preview.style.display = "block";
+        uploadArea.style.display = "none";
+
+        // Start OCR
+        runOCR(e.target.result);
+    };
+    reader.readAsDataURL(file);
+});
+
+// Clear the uploaded receipt and reset
+function clearReceipt() {
+    document.getElementById("receipt-preview").style.display = "none";
+    document.getElementById("upload-area").style.display = "";
+    document.getElementById("ocr-status").style.display = "none";
+    document.getElementById("ocr-results").style.display = "none";
+    document.getElementById("receipt-input").value = "";
+    ocrResults = [];
+}
+
+// Run Tesseract.js OCR on the image
+function runOCR(imageData) {
+    const statusEl = document.getElementById("ocr-status");
+    const statusText = document.getElementById("ocr-status-text");
+    const resultsEl = document.getElementById("ocr-results");
+
+    statusEl.style.display = "flex";
+    resultsEl.style.display = "none";
+    statusText.textContent = "Reading receipt...";
+
+    Tesseract.recognize(imageData, "eng", {
+        logger: function (info) {
+            if (info.status === "recognizing text") {
+                const pct = Math.round(info.progress * 100);
+                statusText.textContent = "Reading receipt... " + pct + "%";
+            }
+        }
+    }).then(function (result) {
+        statusEl.style.display = "none";
+        var parsedItems = parseReceiptText(result.data.text);
+
+        if (parsedItems.length === 0) {
+            statusEl.style.display = "flex";
+            statusText.textContent = "No items found. Try a clearer photo or enter items manually.";
+            document.querySelector(".ocr-spinner").style.display = "none";
+            return;
+        }
+
+        ocrResults = parsedItems;
+        renderOcrResults();
+    }).catch(function (err) {
+        statusEl.style.display = "flex";
+        statusText.textContent = "Error reading receipt. Please try again.";
+        document.querySelector(".ocr-spinner").style.display = "none";
+    });
+}
+
+// Parse the raw OCR text to extract item names and prices
+function parseReceiptText(text) {
+    var foundItems = [];
+    var lines = text.split("\n");
+
+    // Words that indicate non-item lines (totals, tax, etc.)
+    var skipWords = [
+        "subtotal", "sub total", "total", "tax", "tip", "gratuity",
+        "balance", "change", "cash", "credit", "debit", "visa",
+        "mastercard", "amex", "payment", "amount due", "thank you",
+        "welcome", "guest", "server", "table", "order", "check",
+        "date", "receipt"
+    ];
+
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+
+        // Look for a price pattern: digits with decimal (e.g. 12.99, $12.99)
+        var priceMatch = line.match(/\$?\s*(\d{1,6}\.\d{2})\s*$/);
+        if (!priceMatch) continue;
+
+        var price = parseFloat(priceMatch[1]);
+
+        // Skip prices that are zero or unreasonably high
+        if (price <= 0 || price > 9999) continue;
+
+        // Get the item name: everything before the price
+        var name = line.substring(0, line.lastIndexOf(priceMatch[0])).trim();
+
+        // Clean up common OCR artifacts
+        name = name.replace(/^[\d]+[\s.)\-x]+/, ""); // remove leading numbers like "1. " or "1x "
+        name = name.replace(/[^a-zA-Z0-9\s&'/\-().]+/g, ""); // remove stray symbols
+        name = name.trim();
+
+        if (!name || name.length < 2) continue;
+
+        // Skip lines that look like totals/tax/etc
+        var lowerName = name.toLowerCase();
+        var shouldSkip = false;
+        for (var j = 0; j < skipWords.length; j++) {
+            if (lowerName.indexOf(skipWords[j]) !== -1) {
+                shouldSkip = true;
+                break;
+            }
+        }
+        if (shouldSkip) continue;
+
+        foundItems.push({ name: name, price: price });
+    }
+
+    return foundItems;
+}
+
+// Show the parsed OCR items with checkboxes so the user can pick which to add
+function renderOcrResults() {
+    var container = document.getElementById("ocr-items-list");
+    var resultsEl = document.getElementById("ocr-results");
+    resultsEl.style.display = "block";
+
+    var html = "";
+    for (var i = 0; i < ocrResults.length; i++) {
+        html += '<div class="ocr-item-row">';
+        html += '<input type="checkbox" id="ocr-item-' + i + '" checked>';
+        html += '<span class="ocr-item-name">' + escapeHtml(ocrResults[i].name) + '</span>';
+        html += '<span class="ocr-item-price">$' + ocrResults[i].price.toFixed(2) + '</span>';
+        html += '</div>';
+    }
+    container.innerHTML = html;
+}
+
+// Add the checked OCR items to the main items list
+function addSelectedOcrItems() {
+    var addedCount = 0;
+    for (var i = 0; i < ocrResults.length; i++) {
+        var checkbox = document.getElementById("ocr-item-" + i);
+        if (checkbox && checkbox.checked) {
+            items.push({
+                id: Date.now() + i, // offset to ensure unique IDs
+                name: ocrResults[i].name,
+                price: ocrResults[i].price
+            });
+            addedCount++;
+        }
+    }
+
+    if (addedCount === 0) {
+        alert("No items selected. Check at least one item to add.");
+        return;
+    }
+
+    // Refresh the items table and assignments
+    renderItems();
+    renderAssignments();
+
+    // Hide OCR results and show a success message
+    document.getElementById("ocr-results").style.display = "none";
+    var statusEl = document.getElementById("ocr-status");
+    var statusText = document.getElementById("ocr-status-text");
+    statusEl.style.display = "flex";
+    statusEl.style.backgroundColor = "#E8F5E9";
+    statusEl.style.color = "#2E7D32";
+    document.querySelector(".ocr-spinner").style.display = "none";
+    statusText.textContent = addedCount + " item" + (addedCount > 1 ? "s" : "") + " added to your bill!";
+
+    // Scroll down to the items section
+    document.getElementById("items-table").scrollIntoView({ behavior: "smooth", block: "center" });
+}
 
 // ============================================================
 // SECTION 1: ADDING AND REMOVING RECEIPT ITEMS
