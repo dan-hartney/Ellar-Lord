@@ -1,0 +1,76 @@
+/* Skylight Design Tokens
+   Derived from existing Skylight app visual language:
+   warm pastels, rounded shapes, family-friendly feel */
+
+:root {
+  /* Brand Colors */
+  --sky-blue: #4A90D9;
+  --sky-blue-light: #E8F0FE;
+
+  /* Pastel Palette (from app icon grid) */
+  --pastel-pink: #F8B4C8;
+  --pastel-pink-light: #FDE8EF;
+  --pastel-green: #A8D8B9;
+  --pastel-green-light: #E5F5EC;
+  --pastel-yellow: #F5D98C;
+  --pastel-yellow-light: #FDF4DC;
+  --pastel-peach: #F5C4A1;
+  --pastel-peach-light: #FDE8D8;
+  --pastel-purple: #C4A8E0;
+  --pastel-purple-light: #EFE4F7;
+  --pastel-blue: #A0C4E8;
+  --pastel-blue-light: #E0EFF9;
+  --pastel-gray: #C8CCD0;
+  --pastel-gray-light: #F0F1F3;
+
+  /* Calendar Event Colors */
+  --event-yellow: #F5D98C;
+  --event-pink: #F8B4C8;
+  --event-green: #A8D8B9;
+  --event-blue: #A0C4E8;
+
+  /* Neutral Colors */
+  --white: #FFFFFF;
+  --bg-primary: #F7F7F9;
+  --bg-card: #FFFFFF;
+  --text-primary: #1A1A2E;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --border-light: #E5E7EB;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}

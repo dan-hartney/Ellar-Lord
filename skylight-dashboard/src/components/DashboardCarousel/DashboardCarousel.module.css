@@ -1,0 +1,65 @@
+.carousel {
+  margin-bottom: var(--space-2xl);
+}
+
+.pageLabels {
+  display: flex;
+  gap: var(--space-xs);
+  padding: 0 var(--space-xl);
+  margin-bottom: var(--space-md);
+}
+
+.pageLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.pageLabelActive {
+  color: var(--sky-blue);
+  background: var(--sky-blue-light);
+}
+
+.trackWrapper {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.page {
+  min-width: 100%;
+  padding: 0 var(--space-xl);
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding-top: var(--space-lg);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--pastel-gray);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.dotActive {
+  background: var(--sky-blue);
+  width: 24px;
+}

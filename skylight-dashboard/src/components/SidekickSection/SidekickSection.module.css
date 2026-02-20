@@ -1,0 +1,102 @@
+/* Quick Action Buttons — Photo + Talk */
+.quickActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.quickAction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.quickAction:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.quickAction:active {
+  transform: translateY(0);
+}
+
+.quickActionIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.photoIcon {
+  background: linear-gradient(135deg, var(--pastel-peach), var(--pastel-pink));
+}
+
+.talkIcon {
+  background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-purple));
+}
+
+.quickActionLabel {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.quickActionDesc {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+/* Card content styles */
+.cardText {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.importStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.success {
+  background: var(--pastel-green);
+}
+
+.failed {
+  background: var(--pastel-pink);
+}
+
+.inProgress {
+  background: var(--pastel-yellow);
+}
+
+.statusText {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.activitySuggestion {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-style: italic;
+}
